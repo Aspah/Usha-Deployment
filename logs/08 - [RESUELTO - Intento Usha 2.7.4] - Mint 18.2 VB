@@ -1,0 +1,381 @@
+Creación de máquina Usha - Mint 4.3
+Intento de montar Usha 2.7.4    
+
+Características de la máquina 
+
+Apache  2.4.18
+PHP     5.4.24
+MySQL   5.5
+
+
+- Creación Máquina con Mint 18.2
+        My name:        usha        
+        Computer's name : ubu
+        Username: usha
+        password:   ushapass
+
+
+=========================Instalación del Apache: 
+
+
+    - sudo apt-get install apache2 apache2-dev
+    - sudo chown -R usha:usha /var/www     -> Entrega de posesión al usuario
+    - sudo nano /etc/apache2/envvars  
+
+
+==========================Instalación del PHP 5.4
+
+Instructivos: 
+    - https://docs.moodle.org/35/en/Compiling_PHP_from_source
+    - https://ma.ttias.be/how-to-compile-and-install-php-extensions-from-source/
+
+Descarga del .tar desde: 
+    http://us3.php.net/get/php-5.4.24.tar.gz/from/a/mirror  (Ocupé el ca1.php.net de canadá)
+
+Luego :
+
+    -descarga del .tar en ~/Download
+    -luego, abrir CLI dentro de ~/Download
+    -Luego: 
+    - sudo cp php-5.4.24.tar.gz /usr/local/src
+    - cd /usr/local/src
+    - sudo tar -xvf php-5.4.24.tar.gz
+    - cd php-5.4.24/
+
+Luego se instalan estas librerías previas 
+
+    - sudo apt-get install libxml2-dev
+    - sudo apt-get install libcurl4-gnutls-dev
+    - sudo apt-get install libjpeg-dev
+    - sudo apt-get install libpng-dev
+    - sudo apt-get install libc-client2007e-dev
+    - sudo apt-get install libkrb5-dev
+    - sudo apt-get install libmcrypt-dev
+
+Continuando se configura la compilación con el siguiente comando: 
+
+    -  sudo ./configure --with-mysql --with-mcrypt --with-curl --with-imap --with-apxs2=/usr/bin/apxs --with-jpeg-dir --with-kerberos --with-imap-ssl --with-gd --enable-mbstring --enable-maintainer-zts
+    -  sudo make
+    -  sudo make install 
+
+
+========================= Seteo entre el Apache y el PHP
+
+Luego es necesario copiar el archivo de configuración del PHP el -> php.ini desde la fuente hasta donde será leído por el Apache. 
+
+    - sudo cp php.ini-production /usr/local/lib/php.ini
+    - sudo ln -s /usr/local/lib/php.ini /etc
+
+
+Falta decirle al Apache como manejar los archivos.php. 
+Esto se configura en el archivo apache2.conf
+
+    - sudo nano /etc/apache2/apache2.conf
+
+Se agrega:
+    
+    
+    <FilesMatch \.php$>
+        SetHandler application/x-httpd-php
+    </FilesMatch>
+
+    LoadModule php5_module  modules/libphp5.so
+
+Y se revisa que 
+
+    - index.php
+    - index.html
+  
+Están en el archivo  /etc/apache2/mods-available/dir.conf
+
+    - sudo nano /etc/apache2/mods-available/dir.conf
+
+PHP Y APACHE CONECTADOS! CHECK MOTHERFUCKER
+
+
+========================= Compilación de los módulos faltantes en PHP
+
+
+Compilación de paquetes faltantes: mysqli, pdo_mysql, zlib
+Instructivo de esto:    https://ma.ttias.be/how-to-compile-and-install-php-extensions-from-source/
+
+
+    - cd /usr/local/src/php-5.4.24/ext/mysqli
+    - sudo phpize
+    - sudo ./configure
+    - sudo make
+
+Revisar el output informativo -> Me dirá donde quedó el paquete
+Luego se mueve a la carpeta de extensiones. 
+La ruta se obtiene gracias a: 
+
+    - php -i | grep extension_dir               -> Ejemplo /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+
+De no existir la carpeta, se puede crear líbremenete
+
+    - sudo mkdir -p  /usr/local/lib/php/extensions/no-debug-zts-20100525
+
+Copiar el archivo extensión .so a la carpeta extensiones
+
+    - sudo cp modules/mysqli.so /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+
+Luego se edita el PHP.ini
+Dada la configuración con Apache, el PHP.ini está en la carpeta /usr/local/lib/php.ini
+
+Se agrega: 
+    - extension = mysqli.so
+
+Luego, reiniciar Apache 
+
+
+
+
+
+======================Instalación del MySQL 5.5
+
+
+Se comienza a seguir este tutorial: 
+
+https://gist.github.com/ahmadhasankhan/48fc9fc9a19807daef1622751a56884b
+
+Funciona a la perfección <3 
+
+
+CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    ushabase
+        user:       ushadata
+        pass:       ushapass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_v2)
+        Para crear una BD:           CREATE DATABASE ushabase;
+        Para asignar user y pass     GRANT ALL ON ushabase.* TO 'ushadata' IDENTIFIED BY 'ushapass';        (atención al <.*> después de ushahere) 
+
+CORRECTO MIERDA
+    
+
+====================CREACIÓN DEL VIRTUAL HOST
+
+Según : https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-virtual-hosts-on-ubuntu-14-04-lts
+
+=====================Desarga y preparación
+
+Luego descargo el 'Latest Realease 2.7.4' desde:        https://github.com/ushahidi/Ushahidi_Web/releases
+
+Empiezo a seguir las instrucciones. 
+
+La primera es extraer el archivo .tar descargado
+
+Luego mover los CONTENIDOS de la carpeta extraída dentro de la carpeta que se trabajará. 
+
+
+Se descarga el tar desde             https://github.com/ushahidi/Ushahidi_Web/releases
+
+Se extrae en download y se toma el CONTENIDO    y se copia dentro del PUBLIC_HTML del usha.com. 
+
+ATENCIÓN!! -> HAY ARCHIVOS como el .htaccess QUE, DEBIDO AL PUNTO QUE PRECEDE LE NOMBRE, SE MUESTRAN OCULTOS EN LA CARPETA, POR TANTO PARA COPIAR HAY QUE ACTIVAR LA OPCIÓN DE CARPETA PARA MOSTRAR ARCHIVOS OCULTOS. DE AHÍ RECIÉN COPIAR TODO.
+
+ATENCIÓN!! -> Se copia dentro del public_html porque en el usha.com.conf se explicita que Directory Root es ../usha.com/PUBLIC_HTML
+De no ser de otra manera se coloca dentro de la carpeta que especifica el Directory Root. 
+
+
+==============================Corrección del archivo de configuración del Apache2
+
+Luego, agrega el permiso de sobreescritura en el /etc/apache2/apache2.conf
+Se agrega: 
+
+    <Directory /var/www/usha.com/public_html/>
+        
+        AllowOverride All
+        
+    </Directory>
+
+=================================Otorgación de permisos - Esto es temporal: 
+
+    sudo chmod -R 777 application/config
+    sudo chmod -R 777 application/cache
+    sudo chmod -R 777 application/logs
+    sudo chmod -R 777 media/uploads
+    sudo chmod 777 .htaccess  
+
+=================================Error reporting PHP 
+
+* ####Ensure PHP error_reporting level is compatable
+    As of PHP-5.4 Ushahidi doesn't work with the error_reporting level E_STRICT.  Ensure this level is excluded from the error_reporting configuration.
+
+
+Esto se modifica en el php.ini  -> con el Ctrl+F busca 'E_' hay una zona dedicada al manejo del error y el mismo archivo indica como ecluir el E_STRICT              
+
+================================ Se corre el instalador.. crucemos dedos... 
+
+Se sigue el instalador y el wizard funciona correctamente.
+Luego me meto al siguiente link.. y
+
+
+ YEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEESSSSSSSSSSSSSSSSSS
+MUTHAFACKAAAAAA!!!! FUNCIONÓ CTMREEEEEEEE!!!!!!!OOOOH QUE SOY FELIIIZZZ 
+
+LO LOGRÉEEEEEEEEEE 
+
+
+....Noup.... 
+
+Nuevo problema, aparece la página principal, pero le resto de páginas aparecen como not found... 
+Al menos solucioné el tema de la Base DE Datos que era por incompatibilidad del MySQL con el PHP... 
+
+====================Problema: Aparece la página principal, pero el resto aparece como not found. 
+
+- Sospecho que puede ser porque está bajo una subcarpeta del usha.com
+- Intentaré re instalar el usha, en otro virtualhost pero sin el public_html
+
+
+===================Creación de BD para dot.com
+
+
+
+CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    dotbase
+        user:       dotdata
+        pass:       dotpass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_v2)
+        Para crear una BD:           CREATE DATABASE dotbase;
+        Para asignar user y pass     GRANT ALL ON dotbase.* TO 'dotdata' IDENTIFIED BY 'dotpass';        (atención al <.*> después de ushahere)
+
+
+Seguido los preparativos ya mencionados, y a correr el instalador. 
+
+
+El error no era ese...
+Sigo buscando 
+
+======================Solución que encontré: 
+
+
+Agregar 'index.php' entre la página principal y las opciones    ->  dot.com/index.php/login
+
+
+Dado que esto es regulado por el 'AllOverride All', sospecho que al borrar el {Directory /var/www/} del apache2.conf
+
+SHIT. AHORA NO PUEDO ENTRAR A NADA.
+
+Recuperé el dot.com pero se me cayó el usha.com. 
+
+Sigo viendo qué onda con el dot.com
+
+
+SOLUCIONADO!!! ERA NECESARIO ACTIVAR EL REWRITE MOD DEL APACHE: 
+
+    - sudo a2enmod rewrite
+
+============================ Acondicionamiento de Usha para uso: 
+
+- Primero: Temas de seguridad
+    - El mismo Usha me hace un par de advertencias. 
+    - Seguí sólo un par de instrucciones, ya que solicitaba la compra e instalación de un servicio de protocolo HTTPS. 
+
+Luego, corregir los títulos!! 
+
+Primer Intento -> Cambiar el idioma a Español. 
+    - Se descargan los archivos modificados desde:  https://github.com/ushahidi/Ushahidi-Localizations
+
+--- NO SÉ QUE MIERDA PASÓ PERO PERDÍ EL ACCESO A ADMIN.. 
+
+-CREARÉ OTRO VIRTUALHOST Y PROBARÉ INSTALAR AHÍ OTRO USHA EN PARALELO, CON OTRA BD. 
+
+Creación de otro virtualhost ->     hidi.com 
+
+Creación de otra BD: 
+
+CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    hidibase
+        user:       hididata
+        pass:       hidipass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_v2)
+        Para crear una BD:           CREATE DATABASE hidibase;
+        Para asignar user y pass     GRANT ALL ON hidibase.* TO 'hididata' IDENTIFIED BY 'hidipass';        (atención al <.*> después de ushahere)
+
+
+-- Instalar el idioma: Sólo hay que descargar la carpeta del idioma correspondiente desde 
+    -https://github.com/ushahidi/Ushahidi-Localizations
+
+Y copiarlo en /applications/i18n 
+
+Luego borrar todos los archivos de /application/cache 
+
+y volver a cargar el navegador. Debería aparecer la opción y corregirse al toque. 
+
+Ahora vamos a crear el (CL) -> En el usha el es_CL está vacío, así que lo vamos a crear en base a los otros y adaptarlo al 'chileno'
+(Tarea para más adelante) 
+
+=================================Problema como tener más de una página funcionando en el mismo servidor=== 
+
+
+el problema tenía que ver con los permisos. No tengo muy claro CUÁL fue el error en particular, pero solucioné el problema haciendo lo siguiente: 
+
+sudo chown -R usha:usha /var/www/dot.com/
+sudo chown -R usha:usha /var/www/hidi.com/
+sudo chown -R usha:usha /var/www/usha.com/public_html/
+
+                                                    -> Quizás hasta aquí esté listo
+
+sudo chmod -R 755 /var/www/
+
+Aquí ya se solucionó el problema. 
+
+Luego apliqué las modificaciones de permisos que recomienda ushahidi para la seguridad de la página, y todo se mantuvo funcionando. 
+
+
+Por tanto, ahora tengo 3 instancias de Usha corriendo en el mismo server lml 
+
+==============================Próximo paso instalarlo en el Servidor lml =======================================
+
+ - Primero realizo la traducción al CL. 
+
+/alerts.php
+
+    'ALERTAS' -> A qué corresponde? 
+/auth.php
+
+    - 'papel' [reemplazada por] -> 'rol'
+
+/form.php
+    'Formulario' -> A qué corresponde? 
+
+/import.php
+
+    	'missing_localization' => 'Could not import empty category translation for localization for category #',
+        'translation_title' => 'Category translation import failed. Missing category title for the following localization on category #',
+		'translation_added' => 'Category translation added: Localization ',
+
+/installer.php
+    No traducido. Innecesario, pues no aparece en la inerfaz para usuario 
+
+/libraries.php
+    Lo mismo que installer.php 
+
+/report.php
+    Probabilidad de la Información -> revisar a qué corresponde
+
+/reporters.php
+    Reportero inválido', -> revisar a qué se refiere
+
+/ui_admin.php
+    'Error de Geonames' -> REvisar a qué se refiere
+
+
+
+//es_CL terminado!! 
+
+
+ 
+
+
+
+
+

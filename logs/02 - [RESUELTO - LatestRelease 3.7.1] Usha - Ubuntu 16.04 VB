@@ -1,0 +1,84 @@
+Bitácora:   Seteo Ushahidi en Ubuntu 16.04 LTS VirtualBox.
+Fecha inicio:   19/10/17
+
+19/10/17===========================
+
+- Creación Máquina con Ubuntu 16.04
+        My name:        usha        
+        Computer's name : ubu
+        Username: usha
+        password:   ushapass
+
+- Para la creación de la máquina, se mantuvieron las especificaciones del VPS que se comprará en Linode. 
+- Corría muy lento, así que subí a 4Gb de RAM y 2 core. Sólo para instalar aers qué onda 
+- Luego de mandar update y upgrade, creo un clon de la VB. 
+        - Obj: Tener una máquina limpia desde donde trabajar cada vez que necesite crear una nueva, sin necesidad de volver a instalar. 
+
+- Máquina clonada -> Usha - Ubuntu 2.0
+
+    - Instalación del LAMP según: http://lamp.gixx-web.com/Setting.up.a.LAMP.development.environment.on.VirtualBox.pdf
+    - Siguiendo las Bitácora escrita anteriormente. 
+
+- Instalación del AMP 
+    
+
+    - Instalación del Apache -> Check 
+    - Configuración del Apache 
+            Se otorgó propiedad sobre /var/www al grupo:usuario = usha:usha
+
+    - Instalación del PHP 
+    - Siguiendo la instalación de : http://www.inheritx.com/install-lamp-stack-linux-apache-mysql-php-ubuntu-16-04/
+    - comando para eliminar php             $ sudo apt-get purge php*
+    - Instalación del PHP 5.6
+            - En la bitácora anterior no especifiqué si seguí TODOS los pasos que indican, ahora los seguiré a ver qué pasa: 
+        
+            $ sudo apt-get install -y python-software-properties
+            $ sudo add-apt-repository ppa:ondrej/php
+            $ sudo apt-get update
+            $ sudo apt-get install -y php5.6 php5.6-mysql php5.6 php-gettext php5.6-mbstring php-xdebug libapache2-mod-php5.6 php5.6-curl php5.6-gd php5.6-mcrypt php5.6-xml php5.6-xmlrpc
+
+    - NO SEGUIR ESAS INSTRUCCIONES AL PIE DE LA LETRA. PROVOCAN INSTALACIÓN INDESEADA DE php7.1
+    - En la última línea sólo ocupar: 
+            $ sudo apt-get install -y php5.6            
+    
+    - Módulos a instalar de Usha: 
+            curl, 
+            json, 
+            mcrypt, 
+            mysqli, 
+            pdo, 
+            pdo_mysql, 
+            imap
+            gd
+
+    -Todos se instalan según la estructura 
+            $sudo apt-get install -y php5.6-$MóduloPHP      / En donde $MóduloPHP = [curl, json, mcrypt, etc]
+
+     # $php-m -> Entrega todos los módulos instalados de php. 
+
+Luego de esto probé con un phpinfo.php, y todo bien. 
+
+
+
+    -Instalación  Mysql
+    
+    - Continúo con las instrucciónes de a)
+    - Ejecuto las instrucciones según la bitácora anterior. 
+    - Corro los test y todo funciona. 
+    - Recordar reiniciar el apache. 
+
+//INSTALACIÓN LAMP EXITOSA Y FUNCIONAL 
+
+    - Habilitación de mod_rewrite en Apache
+            $sudo a2enmod rewrite
+
+    - Creación exitosa de VirtualHost según este instructivo - https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-virtual-hosts-on-ubuntu-14-04-lts
+    - Principalmente seguí las instrucciones de lo que hice en la bitácora anterior
+
+//INICIO INSTALACIÓN LATEST RELEASE
+
+Seguí las instrucciones del Readme del mismo Usha y las de la bitácora anterior. Todo como seda. 
+
+
+
+

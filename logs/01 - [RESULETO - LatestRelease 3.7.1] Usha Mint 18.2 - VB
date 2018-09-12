@@ -1,0 +1,334 @@
+El trabajo anterior a esta fecha se ha centrado en intentos fallidos de instalación del programa. 
+Hasta ahora el único logro ha sido desplegar la aplicación Ushahidi y su núcleo sobre la plataforma Heroku, que se espera ocupar como modelo para su implementación en un servidor propio. 
+Se ha intentado seguir las instrucciones del mismo Ushahidi para sus versiones "development" y "latest release" de manera infructuosa. Sin embargo estos intentos se hicieron en un pc con uso, por lo que sospecho que existen configuraciones que interfieren con el funcionamiento de la aplicación. 
+Para evitar esto último, intentaré todo los métodos anteriores en máquinas virtuales 'limpias' con LinuxMint18.1
+
+21-09-2017========00
+
+- Se creó una máquina virtual con linuxMint18.1
+- El log original se perdió porque la máquina virtual que lo contenía falló. 
+- En resumen se intentó lo siguiente: 
+    - Intento con "Latest Release con Ushahidi:
+        - 1° Se intentó con Xampp, sin embargo no contenía los módulos json, mysqli, pdo y pdo\_msqli para el php agregado. Opté por abandonarlo [EDIT: abandono por instalación compleja] y probar armar yo el servidor web. 
+        - 2° Se intentó con un instructivo antiguo (https://www.howtogeek.com/howto/42480/how-to-turn-your-home-ubuntu-pc-into-a-lamp-web-server/) pero no pasó el primer test de funcionamiento. So abandoné y buscaré uno más actualizado. 
+
+
+22-09-2017=======
+
+Debido a la falla de la máquina virtual anterior, se crea una nueva máquina virtual. 
+        //IDEA -> Tener la máquina virtua sólo con la versión de prueba que permite el ISO del Linux. Objetivo: Poder hacer un reinicio desde cero siempre que sea necesario de manera fácil y rápida. 
+
+- I'm happy. Encontré dos tutoriales sobre como montar un LAMP en una máquina virtual <3
+    -a) http://lamp.gixx-web.com/Setting.up.a.LAMP.development.environment.on.VirtualBox.pdf
+    -b) https://www.ostraining.com/blog/lamp-virtualbox/
+
+- Observaciones sobre la a)
+                                                                        *No sé como no se me ocurrió antes llevar un registro. Super útil (además es como hablar contigo mismo. Fun (and a little creepy... but.. it works fine&fun) 
+
+    - Parece tener más especificaciones step by step. Me seguiré por esta. 
+    - La primera parte es sobre instalar el VM y el Linux sobre esta. Paso directo a la parte AMP 
+    - Aaaaaaand crush.. message: [12.450165] intel_rapl: no valid domains found in package 0
+    - Intentaré esta solución: https://askubuntu.com/questions/793770/reboot-fails-after-16-04-installation-on-virtualbox-vm
+    - En teoría el problema no debería generar problema con el booteo al ser sólo una notificación. Además pareciera desaparecer con la actualización del VB.   
+    - Ya actualicé el VB. Por hacer: 
+        - Probar la máquina vitual así. 
+        - Actualizar o instalar el guest addittions, en caso de que no funcione (igual hacerlo. Es necesario para las máquinas windows) 
+
+25-09-2017===========
+
+    - Ya probé la maquina virtual sin actualizar el guest additions. 
+        - Aparece el mismo mensaje de error y no enciende. 
+    
+    - Well.. I don't know wtf happend. La máquina que estaba utilizado falló. 
+    - El resto parece funcionar normal, a pesar de la notificación de erro. 
+    - En resumen: 
+        - La Máquina Virtual que estaba utilizando falló con este mensaje de error:  [12.450165] intel_rapl: no valid domains found in package 0
+        - Tras varios intentos de arreglarlo, ninguno resultó. Tampoco pude hacer ningún cambio más que desinstalar y re instalar el VBox. 
+        - Sin embargo, al crear máquinas nuevas, o encender un par de antiguas que también tenían linux. Ninguna falló. Parecían funcionar normal. 
+        - Debido a que el objetivo no es montar máquinas virtuales, sino instalar el Usha, me quedo con la creación de una nueva máquina y continuaré trabjando allí. 
+        - 
+        - Sin embargo, el error ocurrió cuando lancé "sudo apt-get update && sudo apt-get upgrade" en el guest linux. Lo intentaré de nuevo a ver qué sucede. 
+
+//Creación de máquina Usha 1.0
+    
+    - Luego de crear la máquina instalé el guest additions 
+    - Parece correr de manera normal
+    - Hecho el update && upgrade. Lanzado el reboot
+    - CRASH! -> Mismo error. 
+    - Intento pasar a la creación de máquina virtual con nuevo Iso Linux Mint 18.2
+
+//Creación de máquina Usha 1.1
+    - Contiene Linux Mint 18.2
+    - Instalación fluye de manera normal. Finaliza con la máquina funcionando de manera normal. 
+    - Comienzo la instalación de guest addittions  -> Funciona normal 
+    - Comienzo con al "update && upgrade" --> Funciona normal. 
+    - Proceso a continuar con la instalación del AMP del LAMP 
+
+-Instalación del AMP 
+
+    - Instalación del Apache -> Check 
+    - Configuración del Apache -> Al parecer check. Revisando la creación de un nuevo user 
+    - Me quedé en la creación de un nuevo usuario o configuración del usuario www-data. 
+    - Hasta ahora le di los permisos a www-data, es decir Apache podrá crear las cosas. Quizás lo tengo que hacer para "usha" . Intentaré. -> Resultó. 
+    
+    - Instalación del PHP 
+    - Jugando con las versiones según este tutorial: http://www.inheritx.com/install-lamp-stack-linux-apache-mysql-php-ubuntu-16-04/
+    - Instalación exitosa de todos los módulos correspondientes al Usha. 
+    - Existe un problema al chequear el uso del PHP. El php.info no logra lanzar.  -> Resuelto. Intentaba lanzar el test.php desde "/var/www/test.php" mientras tenia que ser "/var/www/html/test.php"
+    
+    - Instalación del Mysql
+    - /////////////////////////////PASS//////////////////////////// ->user: 'root' pass: 'usha'
+    - Problema. Llegado el momento de chequear si mysql se conecta a PHP falla el código y obtengo una página en blanco.        
+           INTENTOS
+            - Creo que el problema es que no encuentro el paquete 'libmysqlclient16-dev' -> Desinstalé los que se parecían. Intentaré instalar ese en específico si calza con 5.6 y con x64
+            -                                                           //Si logro solucionar esto creo que solucioné el gran problema del usha 
+                                                                        // Por ahora al tuto. 
+            -
+
+            * Acumular un par de códigos de chequeo aparte del que aparece en el instructivo. 
+            * Revisar qué dice el instructivo b) sobre el mismo tema. 
+/GRANT ALL ON webdata.* TO 'usha' IDENTIFIED BY 'usha';
+
+
+10-10-2017===========
+
+-Instalación AMP (Continuación)
+    - Instalación del Mysql (Continuación)    
+    - Problema solucionado. Tenía que corregir las credenciales [user: usha /pass: usha ] en el archivo php 
+    - INSTALACIÓN MYSQL CHECK 
+    - Según el test:   El apache se conecta al Mysql. 
+        //
+            <html>
+            <head>
+                <title>PHP Test</title>
+            </head>
+                <body>
+                <?php echo '<p>Hello World</p>';
+            
+                // In the variables section below, replace user and password with your own MySQL credentials as created on your server
+                $servername = "localhost";
+                $username = "usha";
+                $password = "usha";
+    
+                // Create MySQL connection
+                $conn = mysqli_connect($servername, $username, $password);
+    
+                // Check connection - if it fails, output will include the error message
+                if (!$conn) {
+                    die('<p>Connection failed: <p>' . mysqli_connect_error());
+                }
+                echo '<p>Connected successfully</p>';
+                ?>
+            </body>
+            </html>
+        //
+
+
+-* Por seguridad y familiaridad, crearé una nueva base de datos llamada: "conejo" con el user: "perro" y la pass: "gato" e intentaré probar nuevamente el test anterior. 
+- Funcionó!! 
+    DETALLE: 
+            Para ingresar a mysql:       mysql -u root -p            (pass: usha)
+            Para crear una BD:           CREATE DATABASE conejo;
+            Para asignar user y pass     GRANT ALL ON conejo.* TO 'perro' IDENTIFIED BY 'gato';        (atención al <.*> después de conejo) 
+            Una vez hecho esto, todo debería estar listo. 
+
+// INSTALACIÓN LAMP EXITOSA Y FUNCIONAL . 
+- Siendo capaz de crear y conectar bases de datos y un LAMP completo, procedo a instalar el Latest Release. (crucemos dedos) 
+
+-Instalación "Latest Release" Ushahidi. Versión 
+    - Obtenido desde: https://github.com/ushahidi/platform-release/releases v3.7.1
+
+    PASOS: 
+    - Revisar mod_rewrite de apache 
+        - Para habilitar:           $sudo a2enmod rewrite
+        - Para chequear:            Ctrl+F en el php.info para "mod_rewrite"
+    - mod_rewrite check. 
+
+    - Probando la creación de un virtualhost. 
+        - Primero probando la creación del visrtualhost que aparece en el instructivo. No funciona 
+        - Intento de armar virtual host. No funciona. 
+
+    - Mucho sueño. Dejaré todo en estado anterior a los intentos del virtualhost.
+    - IDEA: El VH default tiene una configuración parecida al apache-vhost.conf default que viene en el Usha. Quizás modificar ese para que quede igual al default de apache? Además. Ese Vhost apunta hacia html. En donde está colocada la aplicación de Usha. Quizás funcione. 
+
+11-10-2017====================
+
+    - Cambio de planes. En vez de probar esa idea, aprenderé como crear VirtualHost con Apache. según este tutorial:        - https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-virtual-hosts-on-ubuntu-14-04-lts
+    - Borraré la carpeta Ushahidi. Aún no comenzaré su instalación. 
+    - Primero probaré la creación de VirtualHost y que funcionen. 
+  
+    Creación de los VirtualHost. 
+    - Me solicita cambiar el ServerAdmin para poder recibir correos. No le ecnuetro lógica, así que lo dejaré allí y veré si funciona. 
+    - Se crearon los archivos .conf para el virtual host. 
+    - se modificó el archivo /etc/hosts para redirigir example.com al host VPS
+    - FUNCIONA. y sin modificar el ServerAdmin (comenta que es de utilidad para que los correos lleguen allí. Ni idea) [EDIT: quizás tenga relación con el crontab que viene después]
+        - Debo crear los virtualhost y blá. 
+        - Para que las direcciones lleguen al virtualhost debo redireccionar los llamados hacia el VPS, agregando las direcciones al /etc/hosts
+        - cada vez que agrego una dirección al /hosts debo reiniciar el Apache 
+
+        -Explicación de lo que entiendo que sucede: Escribo una dirección en el omnibox -> gracias al /etc/hosts es interceptado y enviado al VPS -> este lo envía al puerto 80 (?) -> Aquí es reconocido por el virtual host y reenviado al directorio correspondiente en donde me lanza la página index.html. 
+
+
+Intentaremos el "latest release" de Usha
+    -- Obtenido desde: https://github.com/ushahidi/platform-release/releases v3.7.1
+    - mod_rewrite habilitado según lo escrito anteriormente (para buscar donde Ctrl+F 'mod_rewrite')
+    
+    - creación del virtualhost según las instrucciones según aprendidas. 
+
+    - creación del .env en /platform 
+        - Se probará con la BD 'conejo' user 'perro' pass 'gato'        
+        -> duda con el HOST de la BD (probaré con localhost, y si no, con la IP del VPS)    [EDIT: La instalación funciona! CON el localhost como dirección de la BD]
+        - se creó el .env
+        - Luego se lanzó el comando  $ ./bin/phinx migrate -c application/phinx.php     que lanzó el siguiente error. 
+
+//////////->
+
+usha@usha-VirtualBox /var/www/html/platform $ ./bin/phinx migrate -c application/phinx.php 
+Phinx by Rob Morgan - https://phinx.org. 0.8.0
+
+using config file ./application/phinx.php
+PHP Fatal error:  Class 'Database_MySQLimy' not found in /var/www/html/platform/vendor/ohanzee/database/src/Database.php on line 76
+{
+    "errors": [
+        {
+            "status": "Fatal Error",
+            "title": "Class 'Database_MySQLimy' not found",
+            "message": "Class 'Database_MySQLimy' not found",
+            "class": "ErrorException",
+            "file": "/var/www/html/platform/vendor/ohanzee/database/src/Database.php",
+            "line": 76,
+            "trace": [
+                {
+                    "function": "shutdown_handler",
+                    "class": "Kohana_Core",
+                    "type": "::",
+                    "args": []
+                }
+            ]
+        }
+    ]
+
+<-//////////
+
+        -el error estaba en el TIPO DE DB en el .env! -> En el instructivo del release aparece <type=MySQLimy> y debe ser <type=MySQLi> (sobre el 'my' al final de 'MySQLimy'
+        - luego de esto la migración del comando funcionó como seda
+        - Luego de la migración otorgué posesión recursiva de la carpeta /platform a usha:usha a través de      $ sudo chown -R usha:usha /var/www/html/platform/
+        - Agregué los crontab tal como menciona el instructivo del release
+
+        -reinicié el Apache y probé con usha.com en el navegador. 
+        - resultado: 
+
+        FUNCIONÓOOOO!!!!! POR FIN FUNCIONÓOOO!!!! 
+        YIAAAAAAAAHOOOOOOOOOOOOOOOOOO!!!!!!!!!!!!! 
+   
+DETALLES: 
+
+archivo .env:
+
+    DB_HOST=127.0.0.1
+    DB_NAME=conejo
+    DB_USER=perro
+    DB_PASS=gato
+    DB_TYPE=MySQLi
+
+crontab -u usha -e
+    MAILTO=webmaster@localhost
+    */5 * * * * cd /var/www/html/platform && ./bin/ushahidi dataprovider outgoing >> /dev/null
+    */5 * * * * cd /var/www/html/platform && ./bin/ushahidi dataprovider incoming >> /dev/null
+    */5 * * * * cd /var/www/html/platform && ./bin/ushahidi savedsearch >> /dev/null
+    */5 * * * * cd /var/www/html/platform && ./bin/ushahidi notification queue >> /dev/null
+   
+
+ARCHIVOS TEST PARA CONEXIÓN MYSQL-APACHE
+
+phpinfo.php
+
+/////////->
+<?php
+
+// Funcionando 
+// Show all information, defaults to INFO_ALL
+phpinfo();
+
+?>
+
+<-////////
+
+
+phptest.php
+
+/////////->
+<html>
+<head>
+    <title>PHP Test</title>
+</head>
+    <body>
+    <?php echo '<p>Hello World</p>';
+
+    // In the variables section below, replace user and password with your own MySQL credentials as created on your server
+    $servername = "localhost";
+    $username = "perro";
+    $password = "gato";
+
+    // Create MySQL connection
+    $conn = mysqli_connect($servername, $username, $password);
+
+    // Check connection - if it fails, output will include the error message
+    if (!$conn) {
+        die('<p>Connection failed: <p>' . mysqli_connect_error());
+    }
+    echo '<p>Connected successfully</p>';
+    ?>
+</body>
+</html>
+
+<-//////////
+
+tesst.php
+
+/////////////-> 
+<?php
+$link = mysql_connect('localhost', 'root', 'usha');
+if($link){
+    echo 'MySQL connect success!<br>';
+} else {
+    echo 'Could not connect: '.mysql_error().'<br>';
+}
+try{
+    $db = new PDO('mysql:dbname=mysql;host=localhost','root','usha');
+    echo 'PDO MySQL connect success!';
+} catch(PDOException $e){
+    echo 'Could not connect (PDO): '.$e->getMessage();
+}
+<-///////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

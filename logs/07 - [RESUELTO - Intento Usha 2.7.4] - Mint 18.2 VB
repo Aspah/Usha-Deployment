@@ -1,0 +1,498 @@
+Bitácora: 
+Intento de montar Usha 2.7.4 en Mint 18.2VB
+
+Tutoriales y páginas de descarga: 
+
+
+
+Fecha: 27-08-2018
+
+- Creación Máquina con Ubuntu 16.04
+        My name:        usha        
+        Computer's name : ubu
+        Username: usha
+        password:   ushapass
+
+=Instalación Apache: 
+
+
+    - $sudo apt-get install apache2
+    - $sudo chown -R usha:usha /var/www     -> Entrega de posesión al usuario
+    - $sudo nano /etc/apache2/envvars       -> Correción del usuario:grupo bajo el cual funciona Apache. Aquí lo que hice fue cambiar el archivo y dejarlo en 'export APACHE_RUN_USER=usha  export APACHE_RUN_GROUP=usha' #POSIBLE ERROR. NO ESTOY SEGURO DE ESTE PASO 
+
+
+
+=Instalación de php. Intentaré instalar el php5.4 necesario para el Ushav2.x
+
+Instructivo:    https://docs.moodle.org/35/en/Compiling_PHP_from_source
+
+
+Se pilló el .tar en http://us3.php.net/get/php-5.4.24.tar.gz/from/a/mirror
+Instalación exitosa según esta ruta de comandos: 
+
+    -descarga del .tar en ~/Download
+    -luego, abrir CLI dentro de ~/Download
+    -Luego: 
+    - sudo cp php-5.4.24.tar.gz /usr/local/src
+    - cd /usr/local/src
+    - sudo tar -xvf php-5.4.24.tar.gz
+    - cd php-5.4.24/
+    - sudo ./configure --with-mysql
+    - sudo make                         -> Proceso de compilación del php
+    - sudo make test                    -> revisión de que todo esté en orden. 
+    - sudo make install                 -> Instalación del php. 
+    - php -v                            -> Revisión de la instalación. 
+
+
+Exitoso pero insuficiente. El código fuente trae todos los paquetes necesarios para el Usha, pero es necesario instalarlos. 
+
+Como fue hecho, se instalan los siguientes módulos. 
+
+Core
+ctype
+date
+dom
+ereg
+fileinfo
+filter
+hash
+iconv
+json
+libxml
+mysql
+mysqlnd
+pcre
+PDO
+pdo_sqlite
+Phar
+posix
+Reflection
+session
+SimpleXML
+SPL
+sqlite3
+standard
+tokenizer
+xml
+xmlreader
+xmlwriter.
+
+Para agregar los faltantes desde el comienzo hay que buscar el comando necesario en './configure -help' . Normalmente será algo como './configure --with-módulo_buscado'
+
+Sin embargo, pillé una manera de activar los módulos con el php ya instalado, en esta página: https://ma.ttias.be/how-to-compile-and-install-php-extensions-from-source/
+
+Veremos qué tal pesca. 
+
+Para Usha2.x se necesitan y falta los marcados con '#'
+
+
+    PCRE
+    iconv
+#   mcrypt          --with-mcrypt
+    SPL
+#   mbstring        --enable-mbstring
+#   cURL            --with-curl
+    MySQL   
+#   GD              --with-gd
+#   IMAP            --with-imap
+
+Primer problema: No pilla el autoconf del mcrypt. 
+Demasiados problemas. Crearemos otra máquina. Usha4.1 para probar el php con los módulos desde el inicio. 
+
+
+===============================================================
+- Creación Máquina con Ubuntu 16.04 4.2
+        My name:        usha        
+        Computer's name : ubu
+        Username: usha
+        password:   ushapass
+
+= Instalación de apache: 
+
+A lo de arriba se agrega: 
+
+    - sudo apt-get install apache2-dev
+
+= Insalación de php
+
+A lo de arriba se agrega: 
+
+    - sudo apt-get install build-essential      -> Otorga habilidades para compilar. 
+    - --with-apxs2=/usr/bin/apxs                  -> Permite conexión con apache. 
+
+ERROR: No encuentra archivo 'make' -> Razón: el ./configure no logra encontrar el paquete xml2. Hay que instalar la librería libxml2-dev.
+    -sudo apt-get install libxml2-dev
+
+ERROR: No encuentra ruta necesaria para el curl. 
+Solución:      
+    - sudo apt-get install libcurll4-gnutls-dev
+
+ERROR: png.h not found. Antes del error informa 'If configure fails try --with-jpeg-dir=<DIR>' and 'If configure fails try --with-vpx-dir=<DIR>'
+Sol: 
+    - agregar los dos --with informados. 
+
+ERROR: jpeglib.h not found. 
+Sol: 
+    - sudo apt-get install libjpeg-dev
+
+ERROR: vpx_codec.h not found
+Sol: 
+    - sudo apt-get install libvpx-dev
+
+ERROR: png-h not found
+Sol: 
+    - sudo apt-get install libpng-dev
+
+ERROR: utf8_mime2text() has new signature, but U8T_CANONICAL is missing. This should not happen. Check config.log for additional information. //Parece que tiene que ver con el IMAP// 
+Sol: 
+    - sudo apt-get install libc-client2007e-dev
+
+ERROR: This c-client libreary is built with Kerberos support. Add --with-kerberos to your configure line.. 
+Sol: 
+    - add  '--with-kerberos' to the configure line. 
+
+ERROR: Kerberos libraries not found
+Sol: 
+    - sudo apt-get install libkrb5-dev
+
+ERROR: This c-client library is built with SSL support. Add --with-impa-ssl to your configure line. 
+Sol: 
+    - - add  '--with-impa-ssl' to the configure line. 
+
+ERROR: mcrypt.h not found. Reinstall libmcrypt
+Sol: 
+    - sudo apt-get install libmcrypt-dev
+
+
+    ####     YEEEEEEES MOTHERFUCKER SE CREÓ EL CONFIGUREEEEE #######
+
+Conclusión: 
+
+Librerías necesarias de manera previa: 
+
+    - sudo apt-get install libgd3               -> NO INSTALARXML2-       
+    - sudo apt-get install libxml2-dev
+    - sudo apt-get install libcurl4-gnutls-dev
+    - sudo apt-get install libjpeg-dev
+    - sudo apt-get install libpng-dev
+    - sudo apt-get install libc-client2007e-dev
+    - sudo apt-get install libkrb5-dev
+    - sudo apt-get install libmcrypt-dev
+
+[EDIT]
+    - //sudo apt-get install libvpx-dev  -> Probar el configure antes de instalar este           
+
+
+Comando de configuración tentativa: [Edit - Sacar el VPX -> provoca error en el make]
+
+    - sudo ./configure --mith-mysql --with-mycript --with-curl --with-gd --with-imap -with-apxs2=/usr/bin/apxs --with-jpeg-dir --with-vpx-dir --with-kerberos --with-imap-ssl --enable-mbstring
+
+
+Luego de esto: 
+
+    - sudo make
+
+ERROR:     vpx necesita la definición por default de ciertas variables. Un bug que no supe arreglar [Edit: es 'de fabrica']. 
+
+    - El error desapareció. No me fijé en la solución, pero creo que ocurre por la instalación del gd actualizado: 
+    - sudo apt-get install libgd3
+
+
+##PARA SAPEAR LIBRERÍAS:
+    - ldconfig.real -p
+
+
+FUCK COMPILÉ MAL LA WEÁ. TIENE QUE SER SOPORTE PARA MULTITHREATHED
+
+===============================================================
+- Creación Máquina con Ubuntu 16.04 (Me aweoné y sobreescribí la máquina 4.2 No big deal... menos espacio gastado) 
+        My name:        usha        
+        Computer's name : ubu
+        Username: usha
+        password:   ushapass
+
+            
+= Instalación del apache: 
+
+    - sudo apt-get install apache2 apache2-dev
+
+Funcionamiento correcto y al entrar al localhost, pareciera que todo corre bien. 
+
+
+= Instalación del php. 
+
+Se descarga el .tar y se ejecuta hasta la descompresión. 
+Luego se instalan las librerías antes mencionadas exceptuando 
+
+    - libvpx-dev    
+    - libgd3
+
+Luego, se corre el ./configure sin el --with-gd ni el --with-vpx-dir para aislar el comportamiento y comprobar si todo corre sin él. }
+
+SE AGREGA EL THREADED MPM!!! 
+
+    --enable-maintainer-zts
+                                         |
+| You have built PHP for Apache's current non-threaded MPM.          |
+| If you change Apache to use a threaded MPM you must reconfigure    |
+| PHP with --enable-maintainer-zts                     
+
+
+ÚLTIMO CONFIGURE UTILIZADO: 
+
+ sudo ./configure --with-mysql --with-mcrypt --with-curl --with-imap --with-apxs2=/usr/bin/apxs --with-jpeg-dir --with-kerberos --with-imap-ssl --enable-mbstring --enable-maintainer-zts
+
+
+Se prueba el sudo make, a ver si salen errores. 
+
+Sudo make   -> Completado sin errores. 
+
+Se agrega el --with-gd
+
+./configure --with-gd sin problemas. 
+
+Sudo make   -> SIN ERRORES! 
+
+sudo make install   -> FUCKING DONE!! 
+
+
+
+PHP funciona de manera individual. 
+APache funciona de manera individual. 
+
+
+
+Seteo del php.ini para Apache
+
+Lo que falla es la conexión entre ambos. Faltaba decirle al Apache como manejar los archivos.php. 
+Esto se configura en el archivo apache2.conf
+
+    - sudo nano /etc/apache2/apache2.conf
+
+Se agrega:
+    
+    
+    <FilesMatch \.php$>
+        SetHandler application/x-httpd-php
+    </FilesMatch>
+
+    LoadModule php5_module  modules/libphp5.so
+
+Y se revisa que 
+
+    - index.php
+    - index.html
+  
+Están en la carpeta /etc/apache2/mods-available/dir.conf
+
+PHP Y APACHE CONECTADOS! CHECK MOTHERFUCKER
+
+
+=INSTALACIÓN DEL MYSQL
+
+    -- Instalación:  $ sudo apt-get install mysql-server        -> No sé si es compatible con PHP5.4, esperemos que sí
+    - Credentials:   root:usha_v2
+
+CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    ushahere
+        user:       problem
+        pass:       solution
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_v2)
+        Para crear una BD:           CREATE DATABASE ushahere;
+        Para asignar user y pass     GRANT ALL ON ushahere.* TO 'problem' IDENTIFIED BY 'solution';        (atención al <.*> después de ushahere) 
+
+
+ERROR: FALTA PAQUETE MYSQLI  -> Se compila desde la fuente: 
+
+    - cd /usr/local/src/php-5.4.24/ext/mysqli
+    - sudo phpize
+    - sudo ./configure
+    - sudo make
+
+Revisar el output informativo -> Me dirá donde quedó el paquete
+Luego se mueve a la carpeta de extensiones. 
+La ruta se obtiene gracias a: 
+
+    - php -i | grep extension_dir               -> Ejemplo /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+
+De no existir la carpeta, se puede crear líbremenete
+Copiar el archivo extensión .so a la carpeta extensiones
+
+    - sudo cp modules/mysqli.so /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+
+Luego se edita el PHP.ini
+Dada la configuración con Apache, el PHP.ini está en la carpeta /usr/local/lib/php.ini
+
+Se agrega: 
+    - extension = mysqli.so
+
+Luego, reiniciar Apache 
+
+
+ERROR FALTA EL PAQUETE // pdo_msqli
+
+Respito el procedimiento para el paquete anterior: 
+
+    - cd /usr/local/src/php-5.4.24/ext/pdo_mysql
+    - sudo phpize
+    - sudo ./configure
+    - sudo make
+
+Revisar el output en donde está el paquete: 
+    - /usr/local/src/php-5.4.24/ext/pdo_mysql/modules
+
+Luego copiar el paquete a la carpeta de extensiones. 
+
+
+TODO FLUYE COMO EL AGUA - MYSQL CONECTADO MOTHERFUCKEEEEERSSSS!! 
+
+
+===============INSTALACIÓN EXISTOSA DE LOS REQUISITOS. PROCEDO A INSTALAR EL USHAHIDI =====================
+
+Creación del Tuto: 
+
+Se completa el tuto con test.com y example.com 
+Se llega hasta la modificación del /etc/hosts
+
+
+CREADOS LOS VIRTUAL HOST!! DEJO AQUÍ PARA LA PRONTA INSTALACIÓN DEL USHA (OJALÁ FUNCIONE!) 
+
+
+31/08/18 ================================================================================00
+
+Crearé un virtualhost extra, sólo para recordar. -> dot.com  // HECHO
+
+===Desarga y preparación
+
+Luego descargo el 'Latest Realease 2.7.4' desde:        https://github.com/ushahidi/Ushahidi_Web/releases
+
+Empiezo a seguir las instrucciones. 
+
+La primera es extraer el archivo .tar descargado
+
+Luego mover los CONTENIDOS de la carpeta extraída dentro de la carpeta que se trabajará. 
+
+
+
+===Creación de un nuevo virtualhost para el usha
+
+Por tanto.. necesito una carpeta para trabajar, es decir un 'virtualhost'. 
+
+Crearé uno llamado 'usha.com'       --> CREADO según el instructivo.
+
+Se descarga el tar desde             https://github.com/ushahidi/Ushahidi_Web/releases
+
+Se extrae en download y se toma el CONTENIDO    y se copia dentro del PUBLIC_HTML del usha.com. 
+
+ATENCIÓN!! -> HAY ARCHIVOS como el .htaccess QUE, DEBIDO AL PUNTO QUE PRECEDE LE NOMBRE, SE MUESTRAN OCULTOS EN LA CARPETA, POR TANTO PARA COPIAR HAY QUE ACTIVAR LA OPCIÓN DE CARPETA PARA MOSTRAR ARCHIVOS OCULTOS. DE AHÍ RECIÉN COPIAR TODO.
+
+ATENCIÓN!! -> Se copia dentro del public_html porque en el usha.com.conf se explicita que Directory Root es ../usha.com/PUBLIC_HTML
+De no ser de otra manera se coloca dentro de la carpeta que especifica el Directory Root. 
+
+
+===Corrección del archivo de configuración del Apache2
+
+Luego, agrega el permiso de sobreescritura en el /etc/apache2/apache2.conf
+Se agrega: 
+
+    <Directory /var/www/usha.com/public_html/>
+        
+        AllowOverride All
+        
+    </Directory>
+
+===Otorgación de permisos - Esto es temporal: 
+
+    sudo chmod -R 777 application/config
+    sudo chmod -R 777 application/cache
+    sudo chmod -R 777 application/logs
+    sudo chmod -R 777 media/uploads
+    sudo chmod 777 .htaccess                
+
+
+===Creación de una BD para Usha 
+
+        BD_name:    ushabase
+        user:       ushadata
+        pass:       ushapass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_v2)
+        Para crear una BD:           CREATE DATABASE ushabase;
+        Para asignar user y pass     GRANT ALL ON ushabase.* TO 'ushadata' IDENTIFIED BY 'ushapass';        (atención al <.*> después de ushabase) 
+
+
+=== Error reporting PHP 
+
+* ####Ensure PHP error_reporting level is compatable
+    As of PHP-5.4 Ushahidi doesn't work with the error_reporting level E_STRICT.  Ensure this level is excluded from the error_reporting configuration.
+
+Esto se modifica en el php.ini  -> con el Ctrl+F busca 'E_' hay una zona dedicada al manejo del error y el mismo archivo indica como ecluir el E_STRICT
+
+
+=== Se corre el instalador.. crucemos dedos... 
+
+Se sigue el instalador y el wizard funciona correctamente.
+Aunque ocurre un error: 
+
+    -Fatal error: Call to undefined function gzencode() in /var/www/usha.com/public_html/system/core/Kohana.php on line 761
+
+Ocurre un error en el PHP. Le falta una librería. Por lo que leí la función gzencode() está dentro de la librería zlib. Por tanto habría que compilarla en el php nuevamente según este instructivo https://ma.ttias.be/how-to-compile-and-install-php-extensions-from-source/
+
+#ATENCIÓN -> El config.m4 del zlib tenía el nombre pifiado. Estaba como config0.m4. Lo cambié a config.m4 y todo como seda. 
+
+Se agrega el módulo, y el error se corrige!!!! 
+
+APARECE OTRO ERROR: 
+
+&&&&&&&&&&&&&&&&&&&
+            A database error occurred while performing the requested procedure. Please review the database error    below for more information.
+            system/libraries/drivers/Database/Mysqli.php [159]:
+            Unknown Exception: database.error
+            core.report_bug
+&&&&&&&&&&&&&&&&&&&
+
+
+FALLA, BORRARÉ EL PUBLIC_HTML, CREARÉ OTRA Y METERÉ DE NUEVO EL INSTALADOR DEL USHA 
+
+Doesn't work... algo pasa con los permisos que se va a la mierda.. 
+
+//Se probará haciendo una instalación limpia, con los errores ya corregidos.  (El zlib y el E_strict)
+
+Ocuparé un nuevo virtual host... 
+dot.com           
+
+        BD_name:    dotbase
+        user:       dotdata
+        pass:       dotpass
+
+EL ERROR SE MANTIENE POR LA PUTA. 
+
+//IDea a probar -> Borrar los permisos del /var/www/ y dejar sólo los de /var/www/dot.com...
+        -> No porque según lo leído, los efectos que dependen de este cambio sí se ejecutan correctamente. 
+        -> Esto es necesario para poder entrar a través de internet a la página, a través de 'usha.com' y no 'usha.com/index.php'   sólo esto. 
+
+Tengo la idea de que puede ser un problema de compatibilidad del Mysql 5.7 con el php5.4... probaré con MYsql5.5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

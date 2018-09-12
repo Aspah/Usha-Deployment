@@ -1,0 +1,116 @@
+Bitácora:   Intento de montar Usha 2.7.4 a Mint 18.2 VB 
+            Usha v 3.x.x pareciera ser aún insuficiente vs las modalidades y beneficios del Usha 2.7.4
+
+FEcha 21/10/17
+
+21/10/17===========================
+
+Creación de la VB con Mint 18.2
+
+    User: usha
+    Pass: nicolas"526"
+
+
+Instalación apache: 
+    - $sudo apt-get install apache2
+    - $sudo chown -R usha:usha /var/www     -> Entrega de posesión al usuario
+    - $sudo nano /etc/apache2/envvars       -> Correción del usuario:grupo bajo el cual funciona Apache
+
+Instalación php5.4:
+
+    - $sudo add-apt-repository ppa:ondrej/php5-oldstable
+        Lanza error: Cannot add PPA: 'No JSON object could be decoded'.
+
+    - Intento este tuto para instalar el 5.4 https://stackoverflow.com/questions/18003819/how-to-install-php-5-4-install-on-ubuntu-desktop-12-04 (Intento en stand by) 
+
+    - Intento agregar este ppa: sudo add-apt-repository ppa:szymon-karnecki/php5.4-static
+    - Resulta que no soporta xenial, así que vamos a probar en ubuntu 
+    - En Ubuntu 16.04 resultó agregar el ppa, vamos a probar si funciona el php5.4 
+    . No funciona :D 
+    - 
+
+    - Continúo con esto : https://stackoverflow.com/questions/18003819/how-to-install-php-5-4-install-on-ubuntu-desktop-12-04  -> No funciona. 
+
+Instalación php5.6: (Intentaré a ver si es que funciona el Uhsa 
+    - Luego:
+            $ sudo apt-get install -y python-software-properties
+            $ sudo add-apt-repository ppa:ondrej/php
+            $ sudo apt-get update
+            $ sudo apt-get install -y php5.6
+
+    - Agregar módulos para Usha
+            curl, 
+            json, 
+            mcrypt, 
+            mysqli, 
+            pdo, 
+            pdo_mysql, 
+            imap
+            gd
+
+    -Todos se instalan según la estructura 
+            $sudo apt-get install -y php5.6-$MóduloPHP      / En donde $MóduloPHP = [curl, json, mcrypt, etc]
+
+     # $php-m -> Entrega todos los módulos instalados de php. 
+
+    - agregar los módulos del Usha 2.7.4
+            
+            PCRE
+            iconv
+            mcrypt
+            SPL
+            mbstring
+            mysql
+            imap
+            gd
+
+    - para comprobar si PCRE tiene soporte de UTF-8
+            $sudo apt-get install pcre2-utils
+            $pcre2test -C
+
+Instalación mysql
+    -- Instalación:  $ sudo apt-get install mysql-server
+    - Credentials:      root:usha_17
+
+    CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    ushahere
+        user:       problem
+        pass:       solution
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha)
+        Para crear una BD:           CREATE DATABASE ushahere;
+        Para asignar user y pass     GRANT ALL ON ushahere.* TO 'problem' IDENTIFIED BY 'solution';        (atención al <.*> después de conejo) 
+       Una vez hecho esto, todo debería estar listo. 
+
+testeo del LAMP 
+        - Todos los test funcionando. 
+
+Instalación del Ushahidi 2.7.4
+
+        - $git clone --recursive "https://github.com/ushahidi/Ushahidi_Web.git"     -> Recuperamos los archivos. 
+        - 
+
+        - Ocurre un error con el mysqli.    
+        - en la línea 156 de /system/libraries/drivers/databases/mysqli.php "Unexpected Error, database.error"  Ni el código sabe por qué falló
+
+
+- Bug similar https://forums.ushahidi.com/t/unkown-error/2314/3
+
+        . quizás sea un error del php? Esperemos unos días a ver si el oldstable vuelve a aparecer
+
+
+
+
+
+https://chewychunks.wordpress.com/2010/05/28/setup-ushahidi-in-15-painless-minutes-using-bluehost-com/
+
+
+        (http://duspviz.mit.edu/tutorials/mapping-with-ushahidi/ -> VALE LA PENA OBSERVAR
+ 
+
+
+
+
+
+

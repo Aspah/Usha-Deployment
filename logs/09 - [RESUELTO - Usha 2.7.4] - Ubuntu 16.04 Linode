@@ -1,0 +1,560 @@
+Bitácora:   Seteo Ushahidi en Ubuntu 16.04 LTS Linode
+Fecha inicio:   11/09/18
+
+=============================================================
+EDIT: 
+
+ATENCIÓN!!!! PARA INGRESAR AL SSH DEL LINODE, SÓLO SE PODRÁ INGRESAR A TRAVÉS DE: 
+
+
+        SSH   - ssh turing@45.79.207.233
+        PASS  - atctem
+
+    #Para acceder al localhost del Linode, acceder, a través del navegador, con la IP que otorga Linode.
+    # Así se pueden hacer todos los Test! 
+
+===================================================================
+
+Se borra la instancia anterior de Usha en el Linode y se inicia desde cero. 
+Según el siguiente tuto: 
+https://www.linode.com/docs/getting-started/
+
+-ReBuild an Image: 
+        - Image     Ubuntu 16.04 LTS
+        - Root Pass:    no-es-problema      (Esto se setea desde la página del linode)
+
+- Conección a través de ssh y con la root pass : 
+    
+    - ssh root@45.79.207.233
+    - sudo apt-get update
+    - sudo apt-get upgrade
+
+Luego creo un hostname -> Esto es sólo para darle un nombre al PC
+
+    -  hostnamectl set-hostname Enigma
+
+Luego config de la zona horaria: 
+
+    - dpkg-reconfigure tzdata
+
+Hasta aquí termino la configuración inicial del Linode. 
+
+==============  CONFIGURACIONES INICIALES DE SEGURIDAD  ===============================
+
+Primero creo un usuario de menores privilegios que root. Algo más piola desde donde trabajar. 
+
+    - adduser turing    (Pide info como números de teléfonos y blá, sólo darle al enter) 
+            PASS: atctem  (Alan Turing Creates The Enigma Machine)            
+
+    - adduser turing sudo (Agrega el user turing al grupo sudo, así obtiene permisos root)
+
+Finalmente quedaría así: 
+
+    Hostname:   Enigma
+    user    :   turing
+    pass    :   atctem  (Alan Turing creates the Enigma machine)
+
+Luego, salimos del ssh con: 'exit'
+
+
+Y reingresamos con :
+
+    -       ssh turing@45.79.207.233            ATENCIÓN!!!! -> DE AHORA EN ADELANTE SÓLO SE ENTRARÁ ASÍ!! 
+    - PASS: atctem
+
+NO VAMOS A CREAR UNA KEY-PAIR PORQUE REEMPLAZA LA CLAVE Y ADEMÁS GENERA UN ARCHIVO LLAVE QUE ES PROBABLE DE SER PERDIDO!
+
+Luego se bloquea el acceso directo a root desde ssh         YA NO SE PODRÁ INGRESAR CON ROOT@**.***.*** 
+
+    - /etc/ssh/sshd_config
+        - # Authentication:
+          ...
+          PermitRootLogin no
+
+(No se desactiva el logeo por password/ por la misma razón del key pair y no se cambia la escucha a protocolos de internet por motivos de evitar interrumpir al apache) 
+
+
+Luego se reinicia el sistema ssh
+
+    - sudo systemctl restart sshd
+
+
+=================================================================================
+
+INSTALACIÓN DEL LAMP
+
+//Para descargar archivos: 
+
+    - wget -O /Directorio/name "link" 
+    - wget -O ~/Downloads/php-5.4.24.tar.gz  "http://ca1.php.net/get/php-5.4.24.tar.gz/from/this/mirror"
+
+
+// ERROR luego de instalar la imagen de Ubuntu 16.04
+
+perl: warning: Setting locale failed.
+perl: warning: Please check that your locale settings:
+    LANGUAGE = "en_US:",
+	LC_ALL = (unset),
+	LC_MONETARY = "es_CL.UTF-8",
+	LC_ADDRESS = "es_CL.UTF-8",
+	LC_TELEPHONE = "es_CL.UTF-8",
+	LC_NAME = "es_CL.UTF-8",
+	LC_MEASUREMENT = "es_CL.UTF-8",
+	LC_IDENTIFICATION = "es_CL.UTF-8",
+	LC_NUMERIC = "es_CL.UTF-8",
+	LC_PAPER = "es_CL.UTF-8",
+	LANG = "en_US.UTF-8"
+    are supported and installed on your system.
+perl: warning: Falling back to a fallback locale ("en_US.UTF-8").
+locale: Cannot set LC_ALL to default locale: No such file or directory
+    
+    
+    - sudo locale-gen es_CL.UTF-8   
+    - sudo dpkg-reconfigure locales
+
+
+=================INSTALACIÓN DEL APACHE ========================================
+
+ - sudo apt-get install apache2 apache2-dev
+    - sudo chown -R turing:turing /var/www     -> Entrega de posesión al usuario
+    - sudo nano /etc/apache2/envvars 
+
+
+=================INSTALACIÓN DEL PHP ===========================================
+
+ Instructivos: 
+    - https://docs.moodle.org/35/en/Compiling_PHP_from_source
+    - https://ma.ttias.be/how-to-compile-and-install-php-extensions-from-source/
+
+Descarga del .tar (y crear el directorio ~/Downloads que no existía): 
+    
+    - sudo mkdir ~/Downloads
+    - wget -O ~/Downloads/php-5.4.24.tar.gz  "http://ca1.php.net/get/php-5.4.24.tar.gz/from/this/mirror"  
+
+    (Ocupé el ca1.php.net de canadá)
+
+Luego :
+
+    -descarga del .tar en ~/Download
+    -luego, abrir CLI dentro de ~/Download
+    -Luego: 
+    - sudo cp php-5.4.24.tar.gz /usr/local/src
+    - cd /usr/local/src
+    - sudo tar -xvf php-5.4.24.tar.gz
+    - cd php-5.4.24/
+
+Luego se instalan estas librerías previas 
+
+    - sudo apt-get install libxml2-dev
+    - sudo apt-get install libcurl4-gnutls-dev
+    - sudo apt-get install libjpeg-dev
+    - sudo apt-get install libpng-dev
+    - sudo apt-get install libc-client2007e-dev
+    - sudo apt-get install libkrb5-dev
+    - sudo apt-get install libmcrypt-dev
+    - sudo apt-get install pkg-config       (Este faltaba en el LINODE - Permite que corra el ./configure del php)
+    - sudo apt-get install autoconf         (Ídem arriba - Permite el ./configure de las extensiones) 
+
+Continuando se configura la compilación con el siguiente comando: 
+
+    -  sudo ./configure --with-mysql --with-mcrypt --with-curl --with-imap --with-apxs2=/usr/bin/apxs --with-jpeg-dir --with-kerberos --with-imap-ssl --with-gd --enable-mbstring --enable-maintainer-zts
+    -  sudo make
+    -  sudo make install 
+
+========================= Seteo entre el Apache y el PHP
+
+Luego es necesario copiar el archivo de configuración del PHP el -> php.ini desde la fuente hasta donde será leído por el Apache. 
+
+    - sudo cp php.ini-production /usr/local/lib/php.ini
+    - sudo ln -s /usr/local/lib/php.ini /etc
+
+
+Falta decirle al Apache como manejar los archivos.php. 
+Esto se configura en el archivo apache2.conf
+
+    - sudo nano /etc/apache2/apache2.conf
+
+Se agrega:
+    
+    
+    <FilesMatch \.php$>
+        SetHandler application/x-httpd-php
+    </FilesMatch>
+
+    LoadModule php5_module  modules/libphp5.so
+
+Y se revisa que 
+
+    - index.php
+    - index.html
+  
+Están en el archivo  /etc/apache2/mods-available/dir.conf
+
+    - sudo nano /etc/apache2/mods-available/dir.conf
+
+PHP Y APACHE CONECTADOS! CHECK MOTHERFUCKER
+
+    #Para acceder al localhost del Linode, acceder, a través del navegador, con la IP que otorga Linode.
+    # Así se pueden hacer todos los Test! 
+
+
+
+========================= Compilación de los módulos faltantes en PHP
+
+
+Compilación de paquetes faltantes: mysqli, pdo_mysql, zlib
+Instructivo de esto:    https://ma.ttias.be/how-to-compile-and-install-php-extensions-from-source/
+
+
+|||ATENCIÓN!!  -> en el zlib el config.m4 necesario para el phpize, está nombrado como config0.m4 sólo 
+|||               hay que renombrarlo
+|||            
+|||                - sudo mv config0.m4  config.m4
+
+
+    - cd /usr/local/src/php-5.4.24/ext/mysqli
+    - sudo phpize                   
+    - sudo ./configure
+    - sudo make
+
+Revisar el output informativo -> Me dirá donde quedó el paquete
+Luego se mueve a la carpeta de extensiones. 
+La ruta se obtiene gracias a: 
+
+    - php -i | grep extension_dir               -> /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+
+De no existir la carpeta, se puede crear líbremenete
+
+    - sudo mkdir -p  /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+Copiar el archivo extensión .so a la carpeta extensiones
+
+    - sudo cp modules/mysqli.so /usr/local/lib/php/extensions/no-debug-zts-20100525/
+
+
+Luego se edita el PHP.ini
+Dada la configuración con Apache, el PHP.ini está en la carpeta /usr/local/lib/php.ini
+
+Se agrega: 
+    - extension=mysqli.so
+
+Luego, reiniciar Apache 
+
+
+======================Instalación del MySQL 5.5
+
+
+Se comienza a seguir este tutorial: 
+
+https://gist.github.com/ahmadhasankhan/48fc9fc9a19807daef1622751a56884b
+
+Funciona a la perfección <3 
+
+
+CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    ushabase
+        user:       ushadata
+        pass:       ushapass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_hard)
+        Para crear una BD:           CREATE DATABASE ushabase;
+        Para asignar user y pass     GRANT ALL ON ushabase.* TO 'ushadata' IDENTIFIED BY 'ushapass';        (atención al <.*> después de ushahere) 
+
+
+|| ATENCIÓN!! Aquí en los test, ya no corresponde la IP del localhost, sino que corresponde la IP que entrega el Linode. En este caso 45.79.207.233
+
+CORRECTO MIERDA TODOS LOS TEST FUNCIONAN!!!!
+
+
+====================CREACIÓN DEL VIRTUAL HOST
+
+Según : https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-virtual-hosts-on-ubuntu-14-04-lts
+
+
+===================UTILIZACIÓN DE SUBDOMAINS PARA MANTENER MÚLTIPLES INSTANCIAS========================
+
+Estructura:     subdominio.dominio.cl       ->  quintero.aquihayunproblema.cl
+
+Para conectar este subdominio con la página: 
+
+    En Linode: 
+
+        - DNS Manager -> (dominio) aquihayunproblema.cl -> A/AAAA Records -> Add a new A/AAAA Records
+        
+    HOSTNAME:   quintero.aquihayunproblema.cl       (Aquí se agrega la nueva ruta completa) 
+    IP:         45.79.207.233                       (Se agrega la IP del servidor que guarda la pág) 
+
+
+    En El servidor: 
+
+        - Se setea el VirtualHost que guarda la página considerando la ruta del subdominio y sin Alias: 
+
+           ServerName example.aquihayunproblema.cl
+           DocumentRoot /var/www/example.com/public_html
+
+====================CREACIÓN DEL VIRTUAL HOST quintero.aquihayunproblema.cl ===========================
+
+Para trabajar de manera más rápida, no se configuró directamente con el subdominio (aún se está propagando a través de los DNS) 
+La propagación se demora como máx 30min. 
+
+
+Detalles VirtualHost: 
+    
+        Folder:     /var/www/quintero.aquihayunproblema.cl
+
+        .conf:      quintero.aquihayunproblema.cl.conf
+    
+                    ServerAdmin webmaster@localhost             (Aún no lo completo) 
+                    ServerName example.com
+                    DocumentRoot /var/www/quintero.aquihayunproblema.cl
+
+Ya se propagó, así que actualizo el .conf
+
+    
+        .conf:      quintero.aquihayunproblema.cl.conf
+    
+                    ServerAdmin webmaster@localhost             (Aún no lo completo) 
+                    ServerName quintero.aquihayunproblema.cl
+                    DocumentRoot /var/www/quintero.aquihayunproblema.cl
+
+Borrar index.html auxiliar: 
+
+    - sudo rm index.html
+
+=================CREACIÓN BD PARA USHA DEPLOYMENT===================================================
+
+
+CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    quinbase
+        user:       quindata
+        pass:       quinpass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_hard)
+        Para crear una BD:           CREATE DATABASE quinbase;
+        Para asignar user y pass     GRANT ALL ON quinbase.* TO 'quindata' IDENTIFIED BY 'quinpass';        (atención al <.*> después de ushahere) 
+
+TEST APROBADOS
+
+
+=====================DESCARGA Y PREPARACIÓN DEL USHA==========================================
+
+Descarga del archivo y extracción
+
+    - wget -P ~/Downloads/ "https://github.com/ushahidi/Ushahidi_Web/archive/2.7.4.tar.gz"
+    - tar -xvf 2.7.4.tar.gz
+
+Copiar el contenido de lo extraído a /var/www/quintero.aquihayunproblema.cl
+
+    - sudo cp -R Ushahidi_Web-2.7.4/* /var/www/quintero.aquihayunproblema.cl
+    - sudo cp Ushahidi_Web-2.7.4/.git* /var/www/quintero.aquihayunproblema.cl
+    - sudo cp Ushahidi_Web-2.7.4/.h* /var/www/quintero.aquihayunproblema.cl
+
+
+=====================PREPARACIÓN DEL APACHE==========================================
+
+Primero activación del modo Rewrite para permitir el tema de las cleanurl en el Usha
+
+    - sudo a2enmod rewrite
+    - sudo /etc/init.d/apache2 restart     -A RECORDAR REINICIAR EL APACHE!
+
+Luego, agrega el permiso de sobreescritura en el /etc/apache2/apache2.conf
+Se agrega: 
+
+    <Directory /var/www/usha.com/public_html/>
+        
+        AllowOverride All
+        
+    </Directory>
+
+Finalmente reiniciar Apache 
+
+    - sudo /etc/init.d/apache2 restart     -A RECORDAR REINICIAR EL APACHE!
+
+=================================Otorgación de permisos - Esto es temporal: 
+
+    sudo chmod -R 777 application/config
+    sudo chmod -R 777 application/cache
+    sudo chmod -R 777 application/logs
+    sudo chmod -R 777 media/uploads
+    sudo chmod 777 .htaccess  
+
+=================================Error reporting PHP 
+
+* ####Ensure PHP error_reporting level is compatable
+    As of PHP-5.4 Ushahidi doesn't work with the error_reporting level E_STRICT.  Ensure this level is excluded from the error_reporting configuration.
+
+
+Esto se modifica en el php.ini  -> con el Ctrl+F busca 'E_' hay una zona dedicada al manejo del error y el mismo archivo indica como ecluir el E_STRICT              
+
+================================ Se corre el instalador.. crucemos dedos... 
+
+
+Site email address: / Tambíen los datos del usuario Admin del usha
+
+    Cuenta: contacto.aquihayunproblema@gmail.com
+    Pass  : noesproblema
+
+SEDA! 
+
+
+==============================Correcciones por seguridad ============================0
+
+Se borra el instalador: 
+
+    - cd /var/www/quintero.aquihayunproblema.cl/
+    - sudo rm -R ./installer
+
+Se corrigen los permisos: 
+
+    - chmod -R 755 application/config
+    - chmod 644 application/config/*
+    - chmod 644 .htaccess
+
+Sugerencias hechas por Usha en https://wiki.ushahidi.com/display/WIKI/Securing+your+Ushahidi+deployment
+
+    - sudo nano application/config/cookie.php
+            $config['domain'] = 'mydomain.com';
+
+    Sólo se siguen el tema de las cookies. El tema del HTTPS se hará más adelante
+
+||ATENCIÓN  que aquí es SÓLO el dominio, por tanto sería 'aquihayunproblema.cl' (sin el quintero) 
+
+
+============================== INCORPORACIÓN DE LENGUAJES =================================
+
+Descarga y extracción de los archivos desde mi github: 
+    
+    - wget -P ~/Downloads "https://github.com/Aspah/Usha-Deployment/raw/master/es_CL.tar.gz"
+    - sudo tar -xvf es_CL.tar.gz
+    - sudo cp -R ./es_CL /var/www/quintero.aquihayunproblema.cl/application/i18n
+    - cd /var/www/quintero.aquihayunproblema.cl/application/cache
+    - rm -R ./*
+
+
+||| ATENCIÓN! -> Como el en_US es el default para el Usha, en orden de utilizar correctamente el es_CL ES NECESARIO que el en_US TAMBIÉN esté en la carpeta i18n 
+
+
+
+============================SETEO DEL USHA PARALELO en usha.aquihayunproblema.cl==============================
+
+Para trabajar de manera más rápida, no se configuró directamente con el subdominio (aún se está propagando a través de los DNS) 
+La propagación se demora como máx 30min. 
+
+
+Detalles VirtualHost: 
+    
+        Folder:     /var/www/usha.aquihayunproblema.cl
+
+        .conf:      usha.aquihayunproblema.cl.conf
+    
+                    ServerAdmin webmaster@localhost             (Aún no lo completo) 
+                    ServerName example.com
+                    DocumentRoot /var/www/usha.aquihayunproblema.cl
+
+|||CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+        BD_name:    ushabase
+        user:       ushadata
+        pass:       ushapass
+
+        Para ingresar a mysql:       mysql -u root -p            (pass: usha_v2)
+        Para crear una BD:           CREATE DATABASE ushabase;
+        Para asignar user y pass     GRANT ALL ON ushabase.* TO 'ushadata' IDENTIFIED BY 'ushapass';        (atención al <.*> después de ushahere) 
+
+|||SETEO DEL APACHE
+
+Primero activación del modo Rewrite para permitir el tema de las cleanurl en el Usha
+
+    - sudo a2enmod rewrite
+    - sudo /etc/init.d/apache2 restart     -A RECORDAR REINICIAR EL APACHE!
+
+Luego, agrega el permiso de sobreescritura en el /etc/apache2/apache2.conf
+Se agrega: 
+
+    <Directory /var/www/usha.com/public_html/>
+        
+        AllowOverride All
+        
+    </Directory>
+
+Finalmente reiniciar Apache 
+
+    - sudo /etc/init.d/apache2 restart     -A RECORDAR REINICIAR EL APACHE!
+
+
+|||Otorgación de permisos - Esto es temporal: 
+
+    sudo chmod -R 777 application/config
+    sudo chmod -R 777 application/cache
+    sudo chmod -R 777 application/logs
+    sudo chmod -R 777 media/uploads
+    sudo chmod 777 .htaccess  
+
+||| Se corre el instalador 
+
+Site email address: / Tambíen los datos del usuario Admin del usha
+
+    Cuenta: contacto.aquihayunproblema@gmail.com
+    Pass  : noesproblema
+
+SEDA! 
+
+
+|||Correcciones por seguridad 
+
+Se borra el instalador: 
+
+    - cd /var/www/quintero.aquihayunproblema.cl/
+    - sudo rm -R ./installer
+
+Se corrigen los permisos: 
+
+    - chmod -R 755 application/config
+    - chmod 644 application/config/*
+    - chmod 644 .htaccess
+
+Sugerencias hechas por Usha en https://wiki.ushahidi.com/display/WIKI/Securing+your+Ushahidi+deployment
+
+    - sudo nano application/config/cookie.php
+            $config['domain'] = 'mydomain.com';
+
+    Sólo se siguen el tema de las cookies. El tema del HTTPS se hará más adelante
+
+||ATENCIÓN  que aquí es SÓLO el dominio, por tanto sería 'aquihayunproblema.cl' (sin el quintero) 
+
+
+||======== ATENCIÓN SE CAYÓ EL quintero.aquihayunproblema.cl===========================
+||
+||
+||el problema tenía que ver con los permisos. No tengo muy claro CUÁL fue el error en particular, pero solucioné ||el problema haciendo lo siguiente: 
+||
+||sudo chown -R turing:turing /var/www/quintero.aquihayunproblema.cl/
+||sudo chown -R turing:turing /var/www/usha.aquihayunproblema.cl
+||
+||Aquí ya se solucionó el problema. 
+||Luego apliqué las modificaciones de permisos que recomienda ushahidi para la seguridad de la página, y todo se ||mantuvo funcionando. 
+
+
+|| Se agregan los Lenguajes
+
+
+Descarga y extracción de los archivos desde mi github: 
+    
+    - wget -P ~/Downloads "https://github.com/Aspah/Usha-Deployment/raw/master/es_CL.tar.gz"
+    - sudo tar -xvf es_CL.tar.gz
+    - sudo cp -R ./es_CL /var/www/quintero.aquihayunproblema.cl/application/i18n
+    - cd /var/www/quintero.aquihayunproblema.cl/application/cache
+    - rm -R ./*
+
+
+||| ATENCIÓN! -> Como el en_US es el default para el Usha, en orden de utilizar correctamente el es_CL ES NECESARIO que el en_US TAMBIÉN esté en la carpeta i18n 
+
+
+
+LOOOOOOOOOOOOOOOOGRADOOOOOOOOOOOOOOOOOOOOOOO!!!!! 
+
+
+

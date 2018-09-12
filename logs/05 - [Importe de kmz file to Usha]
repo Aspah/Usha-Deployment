@@ -1,0 +1,24 @@
+Bitácora:   Intento de agregar un archivo kmz al despliegue de Ushahidi
+Fecha inicio:   21/10/17
+
+21/10/17===============================================
+
+- Hasta ahora tengo la siguiente teoría, si cambio el html que redirige el usha a mapbox, por un html que yo desee puedo lograr cambiar el mapa de abajo. 
+
+- Proceso de búsqueda de este archivo: 
+    Folders:    
+        -application    
+            cache ->        X
+            clases -> 
+                    controller  -> X (parece ser quien controla la configuración) 
+                          
+            routes ->       X
+            
+    - vendor folder     -> Guarda códigos, templates, librerías de terceros. 
+
+
+IDEA
+    - Los post se tienen que geoposicionar, y tienen que enviar su posición al mapa para que este los monte. 
+    - Buscar el archivo, con la esperanza de que me informe donde está el del map a
+
+No le veo futuro. Aún no encuentro como hacerlo. 

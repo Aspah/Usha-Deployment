@@ -1,0 +1,118 @@
+Bitácora:   Seteo Ushahidi en Ubuntu 16.04 LTS Linode
+Fecha inicio:   19/10/17
+
+19/10/17======================
+
+[EDIT] CREACIÓN DE CUENTA GMAIL PARA AQUIHAYUNPROBLEMA
+
+Cuenta: contacto.aquihayunproblema@gmail.com
+Pass  : noesproblema
+
+//PRIMERA PARTE: CREACIÓN DE LA MÁQUINA UBUNTU EN EL SERVIDOR. 
+
+Elección de la locación en cual colocar el servidor, según este test: http://cloudharmony.com/speedtest-downlink-uplink-latency-dns-for-linode
+
+Según este test y considerando que la prioridad es la latencia, al ser poca data la que se transmitirá, se escoge ATLANTA.
+
+Sigo el video hasta 4:15 de https://www.linode.com/docs/getting-started
+
+-Deploy an Image: 
+        - Image     Ubuntu 16.04 LTS
+        - Root Pass:    you-lier
+
+- Luego de dar varias vueltas sobre como conectar el dominio "aquihayunproblema.cl" hacia el servidor, decido continuar con el instructivo que provee Linode. 
+
+
+Hostname:   Enigma
+user    :   turing
+pass    :   atctem  (Alan Turing creates the Enigma machine)
+
+- Finalizado las capas de seguridad escogidas (solo la creación de un user), paso a la instalación del LAMP según este tuto: https://www.linode.com/docs/web-servers/lamp/install-lamp-stack-on-ubuntu-16-04/
+
+//INSTALACIÓN DEL LAMP 
+
+-Instalación Apache: 
+
+    -    $sudo apt-get install apache2
+    - Se otorgó propiedad del /var/www a turing:turing
+    - Luego se modificó el archivo /etc/apache2/envvars para asignar el grupo y usuario que debía ocupar Apache 
+    - (todo esto según el tuto seguido en las dos bitácoras anteriores: http://lamp.gixx-web.com/Setting.up.a.LAMP.development.environment.on.VirtualBox.pdf)
+
+-Instalación PHP 
+
+    - Siguiendo la instalación de : http://www.inheritx.com/install-lamp-stack-linux-apache-mysql-php-ubuntu-16-04/
+    - Revisar que no haya ningún php instalado:     comando para eliminar php             $ sudo apt-get purge php*
+    - El servidor del Linode no tenía todos los comandos del sudo apt-get
+    - Para actualizar esos comandos:        $ sudo apt-get install software-properties-common
+
+    - Luego:
+            $ sudo apt-get install -y python-software-properties
+            $ sudo add-apt-repository ppa:ondrej/php
+            $ sudo apt-get update
+            $ sudo apt-get install -y php5.6
+
+    - Agregar módulos para Usha
+            curl, 
+            json, 
+            mcrypt, 
+            mysqli, 
+            pdo, 
+            pdo_mysql, 
+            imap
+            gd
+
+    -Todos se instalan según la estructura 
+            $sudo apt-get install -y php5.6-$MóduloPHP      / En donde $MóduloPHP = [curl, json, mcrypt, etc]
+
+     # $php-m -> Entrega todos los módulos instalados de php. 
+
+- Instalación MySql
+
+    - Instalación:  $ sudo apt-get install mysql-server
+    - Credentials:      root:usha_17
+
+    CREACIÓN DE LA DATABASE PARA USHAHIDI
+
+    BD_name:    ushahere
+    user:       problem
+    pass:       solution
+
+    -INSTALACIÓN DE LAMP FUNCIONA! -> PASÓ TODOS LOS TEST!
+    
+    #Para acceder al localhost del Linode, acceder, a través del navegador, con la IP que otorga Linode.
+    # Así se pueden hacer todos los Test! 
+
+//Creación de los virtualhost de prueba para ver como se comportan en el Linode, según este instructivo: https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-virtual-hosts-on-ubuntu-14-04-lts
+
+
+//Para probar los example.com y test.com hay que modificar el /etc/hosts de la máquina propia NO del servidor. Esto porque la máquina local hace un llamado a la dirección example.com, y el /etc/hosts interfiere esa búsqueda y la redirige automáticamente a la IP que tiene registrada. 
+
+//Luego de ello, instalé el Usha pero quizás de una manera algo desordenada. No funcionó. Entraba a la página, pero lanzaba un mensaje de error. 
+
+//El error no lo logré identificar. Fueron muchos pasos, y en cualquiera de ello pudo estar. 
+
+//Decidí desinstalar todo. Borrar el /var/www/html y los .conf de los virtualhost en sites-available y sites-enabled.
+
+//Luego de eso, probé virtualhost con example.com y test.com. Funcionaron. 
+
+//De ahí probé la instalación del Latest RElease. y FUNCIONÓ EN EL SERVIDOR MUTHAFACA
+
+=== 
+
+Acabo de identificar un comportamiento curioso. 
+
+Si entro a través de "usha.com" i.e un llamado que el /etc/hosts de mi pc local redirige a 45.79.207.233, me lanza la página sin problemas. 
+
+En cambio, si entro directamente a través de 45.79.207.233, me lanza error. El mismo mensaje de error que no logré identificar. Quizás nunca estuvo mal configurado, sino que le método de ingreso era el erroneo. 
+
+El tema era el siguiente: 
+    Existía un virtualhost para el Usha, al parecer es necesario que exista. Bastó que agregara un segundo virtual host con la IP en ServerName para que al ingresar la IP al navegador, funcionara como si nada 
+    Incluso, bastó dejara solo un archivo virtualhosto, con la IP como ServerAlias, y todo ok. 
+
+
+
+
+
+
+
+
